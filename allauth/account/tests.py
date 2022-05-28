@@ -322,8 +322,9 @@ class AccountTests(TestCase):
         # We should receive the token_fail context_data
         self.assertTemplateUsed(
             resp,
-            "account/password_reset_from_key.%s" % app_settings.TEMPLATE_EXTENSION,
+            f"account/password_reset_from_key.{app_settings.TEMPLATE_EXTENSION}",
         )
+
 
         self.assertTrue(resp.context_data["token_fail"])
 
@@ -347,8 +348,9 @@ class AccountTests(TestCase):
         resp = self.client.get(url)
         self.assertTemplateUsed(
             resp,
-            "account/password_reset_from_key.%s" % app_settings.TEMPLATE_EXTENSION,
+            f"account/password_reset_from_key.{app_settings.TEMPLATE_EXTENSION}",
         )
+
         self.assertFalse("token_fail" in resp.context_data)
 
         # Reset the password
@@ -368,16 +370,18 @@ class AccountTests(TestCase):
         )
         self.assertTemplateUsed(
             resp,
-            "account/password_reset_from_key.%s" % app_settings.TEMPLATE_EXTENSION,
+            f"account/password_reset_from_key.{app_settings.TEMPLATE_EXTENSION}",
         )
+
         self.assertTrue(resp.context_data["token_fail"])
 
         # Same should happen when accessing the page directly
         response = self.client.get(url)
         self.assertTemplateUsed(
             response,
-            "account/password_reset_from_key.%s" % app_settings.TEMPLATE_EXTENSION,
+            f"account/password_reset_from_key.{app_settings.TEMPLATE_EXTENSION}",
         )
+
         self.assertTrue(response.context_data["token_fail"])
 
         # When in XHR views, it should respond with a 400 bad request
@@ -427,8 +431,10 @@ class AccountTests(TestCase):
         url = resp.url
         resp = self.client.get(url)
         self.assertTemplateUsed(
-            resp, "account/password_reset_from_key.%s" % app_settings.TEMPLATE_EXTENSION
+            resp,
+            f"account/password_reset_from_key.{app_settings.TEMPLATE_EXTENSION}",
         )
+
         self.assertFalse("token_fail" in resp.context_data)
 
         # Reset the password
@@ -454,8 +460,9 @@ class AccountTests(TestCase):
         resp = self.client.get(url)
         self.assertTemplateUsed(
             resp,
-            "account/password_reset_from_key.%s" % app_settings.TEMPLATE_EXTENSION,
+            f"account/password_reset_from_key.{app_settings.TEMPLATE_EXTENSION}",
         )
+
         self.assertTrue("token_fail" in resp.context_data)
 
     @override_settings(ACCOUNT_LOGIN_ON_PASSWORD_RESET=True)
@@ -492,9 +499,9 @@ class AccountTests(TestCase):
         self.assertGreater(mail.outbox[0].body.find("https://"), 0)
         self.assertEqual(len(mail.outbox), 1)
         self.assertTemplateUsed(
-            resp,
-            "account/verification_sent.%s" % app_settings.TEMPLATE_EXTENSION,
+            resp, f"account/verification_sent.{app_settings.TEMPLATE_EXTENSION}"
         )
+
         # Attempt to login, unverified
         for attempt in [1, 2]:
             resp = c.post(
@@ -513,8 +520,9 @@ class AccountTests(TestCase):
 
             self.assertTemplateUsed(
                 resp,
-                "account/verification_sent." + app_settings.TEMPLATE_EXTENSION,
+                f"account/verification_sent.{app_settings.TEMPLATE_EXTENSION}",
             )
+
             # Attempt 1: no mail is sent due to cool-down ,
             # but there was already a mail in the outbox.
             self.assertEqual(len(mail.outbox), attempt)
@@ -532,8 +540,9 @@ class AccountTests(TestCase):
         )[:1].get()
         resp = c.get(reverse("account_confirm_email", args=[confirmation.key]))
         self.assertTemplateUsed(
-            resp, "account/email_confirm.%s" % app_settings.TEMPLATE_EXTENSION
+            resp, f"account/email_confirm.{app_settings.TEMPLATE_EXTENSION}"
         )
+
         c.post(reverse("account_confirm_email", args=[confirmation.key]))
         resp = c.post(
             reverse("account_login"),
@@ -652,8 +661,9 @@ class AccountTests(TestCase):
         resp = self.client.get(url)
         self.assertTemplateUsed(
             resp,
-            "account/password_reset_from_key.%s" % app_settings.TEMPLATE_EXTENSION,
+            f"account/password_reset_from_key.{app_settings.TEMPLATE_EXTENSION}",
         )
+
         self.assertFalse("token_fail" in resp.context_data)
 
         new_password = "newpass123"
@@ -804,8 +814,9 @@ class AccountTests(TestCase):
     def test_logout_view_on_post(self):
         c, resp = self._logout_view("get")
         self.assertTemplateUsed(
-            resp, "account/logout.%s" % app_settings.TEMPLATE_EXTENSION
+            resp, f"account/logout.{app_settings.TEMPLATE_EXTENSION}"
         )
+
 
         receiver_mock = Mock()
         user_logged_out.connect(receiver_mock)

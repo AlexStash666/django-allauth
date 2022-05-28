@@ -22,10 +22,9 @@ class WeixinOAuth2Adapter(OAuth2Adapter):
     @property
     def authorize_url(self):
         settings = self.get_provider().get_settings()
-        url = settings.get(
+        return settings.get(
             "AUTHORIZE_URL", "https://open.weixin.qq.com/connect/qrconnect"
         )
-        return url
 
     def complete_login(self, request, app, token, **kwargs):
         openid = kwargs.get("response", {}).get("openid")
@@ -34,8 +33,7 @@ class WeixinOAuth2Adapter(OAuth2Adapter):
             params={"access_token": token.token, "openid": openid},
         )
         extra_data = resp.json()
-        nickname = extra_data.get("nickname")
-        if nickname:
+        if nickname := extra_data.get("nickname"):
             extra_data["nickname"] = nickname.encode("raw_unicode_escape").decode(
                 "utf-8"
             )
@@ -44,14 +42,14 @@ class WeixinOAuth2Adapter(OAuth2Adapter):
 
 class WeixinOAuth2ClientMixin(object):
     def get_client(self, request, app):
-        callback_url = reverse(self.adapter.provider_id + "_callback")
+        callback_url = reverse(f"{self.adapter.provider_id}_callback")
         protocol = (
             self.adapter.redirect_uri_protocol or app_settings.DEFAULT_HTTP_PROTOCOL
         )
         callback_url = build_absolute_uri(request, callback_url, protocol=protocol)
         provider = self.adapter.get_provider()
         scope = provider.get_scope(request)
-        client = WeixinOAuth2Client(
+        return WeixinOAuth2Client(
             request,
             app.client_id,
             app.secret,
@@ -60,7 +58,6 @@ class WeixinOAuth2ClientMixin(object):
             callback_url,
             scope,
         )
-        return client
 
 
 class WeixinOAuth2LoginView(WeixinOAuth2ClientMixin, OAuth2LoginView):

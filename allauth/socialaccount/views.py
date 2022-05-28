@@ -34,8 +34,7 @@ class SignupView(
 
     def dispatch(self, request, *args, **kwargs):
         self.sociallogin = None
-        data = request.session.get("socialaccount_sociallogin")
-        if data:
+        if data := request.session.get("socialaccount_sociallogin"):
             self.sociallogin = SocialLogin.deserialize(data)
         if not self.sociallogin:
             return HttpResponseRedirect(reverse("account_login"))
@@ -73,19 +72,25 @@ class SignupView(
 signup = SignupView.as_view()
 
 
+
+
 class LoginCancelledView(TemplateView):
     template_name = (
-        "socialaccount/login_cancelled." + account_settings.TEMPLATE_EXTENSION
+        f"socialaccount/login_cancelled.{account_settings.TEMPLATE_EXTENSION}"
     )
+
+
 
 
 login_cancelled = LoginCancelledView.as_view()
 
 
+
+
 class LoginErrorView(TemplateView):
-    template_name = (
-        "socialaccount/authentication_error." + account_settings.TEMPLATE_EXTENSION
-    )
+    template_name = f"socialaccount/authentication_error.{account_settings.TEMPLATE_EXTENSION}"
+
+
 
 
 login_error = LoginErrorView.as_view()

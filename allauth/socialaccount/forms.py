@@ -54,8 +54,7 @@ class DisconnectForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(DisconnectForm, self).clean()
-        account = cleaned_data.get("account")
-        if account:
+        if account := cleaned_data.get("account"):
             get_adapter(self.request).validate_disconnect(account, self.accounts)
         return cleaned_data
 

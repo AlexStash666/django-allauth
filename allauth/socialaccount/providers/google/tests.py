@@ -102,13 +102,14 @@ class GoogleTests(OAuth2TestsMixin, TestCase):
         email = "raymond.penners@example.com"
         self.login(
             self.get_mocked_response(
-                name=first_name + " " + last_name,
+                name=f"{first_name} {last_name}",
                 email=email,
                 given_name=first_name,
                 family_name=last_name,
                 verified_email=True,
             )
         )
+
         user = User.objects.get(email=email)
         self.assertEqual(user.username, "raymond.penners")
 

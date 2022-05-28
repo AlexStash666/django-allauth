@@ -6,12 +6,10 @@ from allauth.socialaccount.providers.base import Provider, ProviderAccount
 
 class DraugiemAccount(ProviderAccount):
     def get_avatar_url(self):
-        ret = None
         pic_small_url = self.account.extra_data.get("img")
         pic_icon_url = self.account.extra_data.get("imgi")
         pic_medium_url = self.account.extra_data.get("imgm")
-        pic_large_url = self.account.extra_data.get("imgl")
-        if pic_large_url:
+        if pic_large_url := self.account.extra_data.get("imgl"):
             return pic_large_url
         elif pic_medium_url:
             return pic_medium_url
@@ -20,7 +18,7 @@ class DraugiemAccount(ProviderAccount):
         elif pic_small_url:
             return pic_small_url
         else:
-            return ret
+            return None
 
     def to_str(self):
         default = super(DraugiemAccount, self).to_str()
@@ -28,7 +26,7 @@ class DraugiemAccount(ProviderAccount):
         surname = self.account.extra_data.get("surnname")
 
         if name and surname:
-            return "%s %s" % (name, surname)
+            return f"{name} {surname}"
 
         return default
 
@@ -39,9 +37,9 @@ class DraugiemProvider(Provider):
     account_class = DraugiemAccount
 
     def get_login_url(self, request, **kwargs):
-        url = reverse(self.id + "_login")
+        url = reverse(f"{self.id}_login")
         if kwargs:
-            url = url + "?" + urlencode(kwargs)
+            url = f"{url}?{urlencode(kwargs)}"
         return url
 
     def extract_uid(self, data):

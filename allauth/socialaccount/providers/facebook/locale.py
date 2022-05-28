@@ -54,17 +54,16 @@ def get_default_locale_callable():
         isn't one avaible, 'en_US' is returned.
         """
         chosen = "en_US"
-        language = get_language()
-        if language:
+        if language := get_language():
             locale = to_locale(language)
             lang, _, reg = locale.partition("_")
 
             lang_map = fb_locales.get(lang)
             if lang_map is not None:
                 if reg in lang_map["regs"]:
-                    chosen = lang + "_" + reg
+                    chosen = f"{lang}_{reg}"
                 else:
-                    chosen = lang + "_" + lang_map["default"]
+                    chosen = f"{lang}_" + lang_map["default"]
         return chosen
 
     return default_locale
