@@ -48,7 +48,7 @@ class OAuthView(object):
         parameters = {}
         if scope:
             parameters["scope"] = scope
-        client = OAuthClient(
+        return OAuthClient(
             request,
             app.client_id,
             app.secret,
@@ -58,12 +58,11 @@ class OAuthView(object):
             parameters=parameters,
             provider=provider,
         )
-        return client
 
 
 class OAuthLoginView(OAuthView):
     def dispatch(self, request):
-        callback_url = reverse(self.adapter.provider_id + "_callback")
+        callback_url = reverse(f"{self.adapter.provider_id}_callback")
         SocialLogin.stash_state(request)
         action = request.GET.get("action", AuthAction.AUTHENTICATE)
         provider = self.adapter.get_provider()
@@ -84,13 +83,10 @@ class OAuthCallbackView(OAuthView):
         View to handle final steps of OAuth based authentication where the user
         gets redirected back to from the service provider
         """
-        login_done_url = reverse(self.adapter.provider_id + "_callback")
+        login_done_url = reverse(f"{self.adapter.provider_id}_callback")
         client = self._get_client(request, login_done_url)
         if not client.is_valid():
-            if "denied" in request.GET:
-                error = AuthError.CANCELLED
-            else:
-                error = AuthError.UNKNOWN
+            error = AuthError.CANCELLED if "denied" in request.GET else AuthError.UNKNOWN
             extra_context = dict(oauth_client=client)
             return render_authentication_error(
                 request,

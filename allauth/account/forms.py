@@ -174,8 +174,9 @@ class LoginForm(forms.Form):
         if self._errors:
             return
         credentials = self.user_credentials()
-        user = get_adapter(self.request).authenticate(self.request, **credentials)
-        if user:
+        if user := get_adapter(self.request).authenticate(
+            self.request, **credentials
+        ):
             self.user = user
         else:
             auth_method = app_settings.AUTHENTICATION_METHOD
@@ -186,8 +187,9 @@ class LoginForm(forms.Form):
                 else:
                     auth_method = app_settings.AuthenticationMethod.USERNAME
             raise forms.ValidationError(
-                self.error_messages["%s_password_mismatch" % auth_method]
+                self.error_messages[f"{auth_method}_password_mismatch"]
             )
+
         return self.cleaned_data
 
     def login(self, request, redirect_url=None):
@@ -235,8 +237,9 @@ def _base_signup_form_class():
         fc_module, fc_classname = app_settings.SIGNUP_FORM_CLASS.rsplit(".", 1)
     except ValueError:
         raise exceptions.ImproperlyConfigured(
-            "%s does not point to a form" " class" % app_settings.SIGNUP_FORM_CLASS
+            f"{app_settings.SIGNUP_FORM_CLASS} does not point to a form class"
         )
+
     try:
         mod = import_module(fc_module)
     except ImportError as e:
@@ -394,8 +397,7 @@ class SignupForm(BaseSignupForm):
         dummy_user = get_user_model()
         user_username(dummy_user, self.cleaned_data.get("username"))
         user_email(dummy_user, self.cleaned_data.get("email"))
-        password = self.cleaned_data.get("password1")
-        if password:
+        if password := self.cleaned_data.get("password1"):
             try:
                 get_adapter().clean_password(password, user=dummy_user)
             except forms.ValidationError as e:
@@ -405,12 +407,11 @@ class SignupForm(BaseSignupForm):
             app_settings.SIGNUP_PASSWORD_ENTER_TWICE
             and "password1" in self.cleaned_data
             and "password2" in self.cleaned_data
-        ):
-            if self.cleaned_data["password1"] != self.cleaned_data["password2"]:
-                self.add_error(
-                    "password2",
-                    _("You must type the same password each time."),
-                )
+        ) and self.cleaned_data["password1"] != self.cleaned_data["password2"]:
+            self.add_error(
+                "password2",
+                _("You must type the same password each time."),
+            )
         return self.cleaned_data
 
     def save(self, request):

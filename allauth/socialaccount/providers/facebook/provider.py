@@ -28,7 +28,7 @@ GRAPH_API_VERSION = (
     .get("facebook", {})
     .get("VERSION", "v7.0")
 )
-GRAPH_API_URL = "https://graph.facebook.com/" + GRAPH_API_VERSION
+GRAPH_API_URL = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
 
 NONCE_SESSION_KEY = "allauth_facebook_nonce"
 NONCE_LENGTH = 32
@@ -44,9 +44,8 @@ class FacebookAccount(ProviderAccount):
         # image will always be highest res possible and square
         return (
             GRAPH_API_URL
-            + "/%s/picture?type=square&height=600&width=600&return_ssl_resources=1"
-            % uid
-        )  # noqa
+            + f"/{uid}/picture?type=square&height=600&width=600&return_ssl_resources=1"
+        )
 
     def to_str(self):
         dflt = super(FacebookAccount, self).to_str()
@@ -72,17 +71,12 @@ class FacebookProvider(OAuth2Provider):
             process = "'%s'" % escapejs(kwargs.get("process") or AuthProcess.LOGIN)
             action = "'%s'" % escapejs(kwargs.get("action") or AuthAction.AUTHENTICATE)
             scope = "'%s'" % escapejs(kwargs.get("scope", ""))
-            js = "allauth.facebook.login(%s, %s, %s, %s)" % (
-                next,
-                action,
-                process,
-                scope,
-            )
-            ret = "javascript:%s" % (quote(js),)
+            js = f"allauth.facebook.login({next}, {action}, {process}, {scope})"
+            ret = f"javascript:{quote(js)}"
         elif method == "oauth2":
             ret = super(FacebookProvider, self).get_login_url(request, **kwargs)
         else:
-            raise RuntimeError("Invalid method specified: %s" % method)
+            raise RuntimeError(f"Invalid method specified: {method}")
         return ret
 
     def _get_locale_callable(self):
@@ -129,7 +123,7 @@ class FacebookProvider(OAuth2Provider):
     def get_init_params(self, request, app):
         init_params = {"appId": app.client_id, "version": GRAPH_API_VERSION}
         settings = self.get_settings()
-        init_params.update(settings.get("INIT_PARAMS", {}))
+        init_params |= settings.get("INIT_PARAMS", {})
         return init_params
 
     def get_fb_login_options(self, request):
@@ -208,8 +202,7 @@ class FacebookProvider(OAuth2Provider):
 
     def extract_email_addresses(self, data):
         ret = []
-        email = data.get("email")
-        if email:
+        if email := data.get("email"):
             # data['verified'] does not imply the email address is
             # verified.
             ret.append(EmailAddress(email=email, verified=False, primary=True))

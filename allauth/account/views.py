@@ -52,8 +52,8 @@ sensitive_post_parameters_m = method_decorator(
 def _ajax_response(request, response, form=None, data=None):
     adapter = get_adapter(request)
     if adapter.is_ajax(request):
-        if isinstance(response, HttpResponseRedirect) or isinstance(
-            response, HttpResponsePermanentRedirect
+        if isinstance(
+            response, (HttpResponseRedirect, HttpResponsePermanentRedirect)
         ):
             redirect_to = response["Location"]
         else:
@@ -161,12 +161,10 @@ class LoginView(
             return e.response
 
     def get_success_url(self):
-        # Explicitly passed ?next= URL takes precedence
-        ret = (
+        return (
             get_next_redirect_url(self.request, self.redirect_field_name)
             or self.success_url
         )
-        return ret
 
     def get_context_data(self, **kwargs):
         ret = super(LoginView, self).get_context_data(**kwargs)
@@ -233,12 +231,10 @@ class SignupView(
         return get_form_class(app_settings.FORMS, "signup", self.form_class)
 
     def get_success_url(self):
-        # Explicitly passed ?next= URL takes precedence
-        ret = (
+        return (
             get_next_redirect_url(self.request, self.redirect_field_name)
             or self.success_url
         )
-        return ret
 
     def form_valid(self, form):
         # By assigning the User to a property on the view, we allow subclasses
@@ -257,8 +253,7 @@ class SignupView(
     def get_context_data(self, **kwargs):
         ret = super(SignupView, self).get_context_data(**kwargs)
         form = ret["form"]
-        email = self.request.session.get("account_verified_email")
-        if email:
+        if email := self.request.session.get("account_verified_email"):
             email_keys = ["email"]
             if app_settings.SIGNUP_EMAIL_ENTER_TWICE:
                 email_keys.append("email2")
@@ -357,8 +352,7 @@ class ConfirmEmailView(TemplateResponseMixin, LogoutFunctionalityMixin, View):
         session gets lost), but at least we're secure.
         """
         user_pk = None
-        user_pk_str = get_adapter(self.request).unstash_user(self.request)
-        if user_pk_str:
+        if user_pk_str := get_adapter(self.request).unstash_user(self.request):
             user_pk = url_str_to_user_pk(user_pk_str)
         user = confirmation.email_address.user
         if user_pk == user.pk and self.request.user.is_anonymous:
@@ -563,17 +557,15 @@ class EmailView(AjaxCapableProcessFormViewMixin, FormView):
         return ret
 
     def get_ajax_data(self):
-        data = []
-        for emailaddress in self.request.user.emailaddress_set.all():
-            data.append(
-                {
-                    "id": emailaddress.pk,
-                    "email": emailaddress.email,
-                    "verified": emailaddress.verified,
-                    "primary": emailaddress.primary,
-                }
-            )
-        return data
+        return [
+            {
+                "id": emailaddress.pk,
+                "email": emailaddress.email,
+                "verified": emailaddress.verified,
+                "primary": emailaddress.primary,
+            }
+            for emailaddress in self.request.user.emailaddress_set.all()
+        ]
 
 
 email = login_required(EmailView.as_view())
@@ -592,10 +584,12 @@ class PasswordChangeView(AjaxCapableProcessFormViewMixin, FormView):
         return super(PasswordChangeView, self).dispatch(request, *args, **kwargs)
 
     def render_to_response(self, context, **response_kwargs):
-        if not self.request.user.has_usable_password():
-            return HttpResponseRedirect(reverse("account_set_password"))
-        return super(PasswordChangeView, self).render_to_response(
-            context, **response_kwargs
+        return (
+            super(PasswordChangeView, self).render_to_response(
+                context, **response_kwargs
+            )
+            if self.request.user.has_usable_password()
+            else HttpResponseRedirect(reverse("account_set_password"))
         )
 
     def get_form_kwargs(self):
@@ -705,8 +699,14 @@ class PasswordResetView(AjaxCapableProcessFormViewMixin, FormView):
 password_reset = PasswordResetView.as_view()
 
 
+
+
 class PasswordResetDoneView(TemplateView):
-    template_name = "account/password_reset_done." + app_settings.TEMPLATE_EXTENSION
+    template_name = (
+        f"account/password_reset_done.{app_settings.TEMPLATE_EXTENSION}"
+    )
+
+
 
 
 password_reset_done = PasswordResetDoneView.as_view()
@@ -818,10 +818,12 @@ class PasswordResetFromKeyView(
 password_reset_from_key = PasswordResetFromKeyView.as_view()
 
 
+
+
 class PasswordResetFromKeyDoneView(TemplateView):
-    template_name = (
-        "account/password_reset_from_key_done." + app_settings.TEMPLATE_EXTENSION
-    )
+    template_name = f"account/password_reset_from_key_done.{app_settings.TEMPLATE_EXTENSION}"
+
+
 
 
 password_reset_from_key_done = PasswordResetFromKeyDoneView.as_view()
@@ -869,15 +871,21 @@ class LogoutView(TemplateResponseMixin, LogoutFunctionalityMixin, View):
 logout = LogoutView.as_view()
 
 
+
+
 class AccountInactiveView(TemplateView):
-    template_name = "account/account_inactive." + app_settings.TEMPLATE_EXTENSION
+    template_name = f"account/account_inactive.{app_settings.TEMPLATE_EXTENSION}"
+
 
 
 account_inactive = AccountInactiveView.as_view()
 
 
+
+
 class EmailVerificationSentView(TemplateView):
-    template_name = "account/verification_sent." + app_settings.TEMPLATE_EXTENSION
+    template_name = f"account/verification_sent.{app_settings.TEMPLATE_EXTENSION}"
+
 
 
 email_verification_sent = EmailVerificationSentView.as_view()
